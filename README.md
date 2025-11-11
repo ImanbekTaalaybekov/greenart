@@ -1,59 +1,87 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GreenArt
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+GreenArt — корпоративная платформа для компании по озеленению, которая работает по подписке и предоставляет отдельные разовые услуги. Цель приложения — связать клиента, сотрудников и административные роли в едином рабочем пространстве, где задачи фиксируются, распределяются между работниками и полностью контролируются администратором и бухгалтерией.
 
-## About Laravel
+## Роли системы
+- **Клиент** — формирует заявку в рамках подписки или вне её, прикладывает текстовое описание и фотографии дополнительных задач.
+- **Работник** — получает назначенные задачи, подтверждает готовность взяться за работу, фиксирует прогресс.
+- **Администратор** — видит все заявки, управляет назначением исполнителей, контролирует статусы и соответствие SLA.
+- **Бухгалтер** — отслеживает способ оплаты, суммы по разовым услугам, подтверждает закрытие финансов.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Жизненный цикл заказа
+1. Клиент отправляет заявку (основной текст + фото доп. задачи).
+2. Выбирается `payment_type`:
+   - `subscription` — задача входит в пакетные обязательства, поле `payment_money` остаётся `null`;
+   - `extra` — услуга оплачивается отдельно, в `payment_money` фиксируется сумма.
+3. Администратор назначает исполнителя, заполняя `worker_id`.
+4. Работник принимает задачу в работу, обновляет статусы и отчётность.
+5. Бухгалтер подтверждает оплату (для `extra`) и закрытие задачи.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+В дальнейшем планируется расширить модель заказа (`orders`/`tasks`) дополнительными полями: статус выполнения, дедлайны, история действий и вложения для внутренней коммуникации.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Поток администратора
+- **Объявления**: отдельная лента, где админ размещает новости и регламенты. Экран создания включает `title` и детальное описание, после сохранения карточка появляется в общей ленте.
+- **Управление ролями и аккаунтами**: список пользователей, отсортированный по ролям (Админы, Садовники, Клиенты, Бухгалтеры). В карточке роли виден перечень аккаунтов и кнопка перехода к форме редактирования/создания (логин, пароль, выбранная роль, дополнительные поля).
+- **Назначение задач**: из списка работников или клиентов админ проваливается в карточку, видит текущее расписание (календарь рабочих/выходных дней), очередь задач и кнопку «назначить». При создании задачи выбираются клиент, адрес, комментарий, прикладываются файлы; после сохранения задача появляется у работника и в отчётах.
+- **Коммуникации**: по каждой задаче создаётся чат между нужными ролями (A+W, A+W+K и т.д.). Админ может добавлять/удалять участников, видеть историю, получать подтверждения выполнения. Работник отвечает и прикладывает фотоотчёт, но не меняет состав чата.
+- **Ежедневные отчёты**: отдельный экран «Отчёт дня» агрегирует фото, время выполнения, комментарии от работника и клиента. В календаре можно перейти к конкретной дате и открыть связанный отчёт/чат.
+- **Финансы**: модуль показывает данные договора, сумму к оплате, комментарии, а также таблицу «История оплат» с разбивкой по месяцам. Админ создаёт новый счёт, отмечает поступление средств и передаёт информацию бухгалтеру.
 
-## Learning Laravel
+## Кабинет клиента
+- **Список задач**: карточки с прогрессом и кнопкой «добавить задачу», где клиент описывает детали и прикрепляет фото. Отдельная вкладка позволяет фильтровать задачи по статусу.
+- **Чаты**: в клиентском профиле доступен диалог с админом и назначенным работником, поэтому все вопросы решаются без выхода из приложения.
+- **Расписание и отчёты**: календарь показывает даты визитов, а экран «отчёт дня» содержит фото выполненных работ, комментарии от команды и поле для обратной связи.
+- **Платежи**: карточка договора с суммами и комментариями, кнопка «создать» для подтверждения оплаты, таблица истории платежей по месяцам и годам.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Панель бухгалтера
+- **Разделы «график» и «оплата»**: бухгалтер видит календарь задач и все финансовые операции, может добавлять новые оплаты или редактировать существующие.
+- **Экспорт и история**: доступ к тем же отчётам, что и у администратора, плюс возможность выгружать PDF с историей оплат.
+- **Работа с клиентами**: список клиентов (K1…Kn); в карточке клиента фиксируются дата, сумма, комментарии к доп. работам и кнопка создания записи об оплате.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Панель садовника
+- **Лента задач**: блок «папка задания» показывает очередь назначенных задач и доп. поручений по клиентам. Каждая карточка ведёт в подробный экран с инструкцией.
+- **Отчёт по задаче**: садовник фиксирует дату выполнения, прикрепляет фото «до/после», оставляет комментарий и нажимает кнопку «выполнил». Эти данные сразу улетают в отчёт дня и соответствующий чат.
+- **Чаты**: отдельный раздел с диалогами `A+W` или `A+W+K`. Работник пишет сообщения и отправляет материалы, но не может менять участников или удалять чат.
+- **Календарь**: виджет графика показывает, в какие дни нужно выходить на работу и какие дни свободны. Из календаря можно открыть список задач на конкретную дату.
+- **Отчёты и объявления**: доступен экран «Отчёт дня» (фото, комментарии, статус), а также лента объявлений от администратора.
 
-## Laravel Sponsors
+## Логика оплат
+- **Карточка садовника**: при выборе сотрудника отображаются рабочие дни недели, базовая ставка/стоимость услуги (задана при создании) и параметры начислений (например, количество оплаченных дней и задач). Можно добавлять комментарии и сохранять изменения.
+- **Модуль «Оплата»**: включает информацию об оплате клиента, вклад «внесение для работ» и отдельную вкладку «ЗП садовника», где фиксируются выплаты подрядчику.
+- **Списки участников**: из блоков «список работников» и «список клиентов» переходят в карточки для назначения выплат, где указываются дата, сумма и комментарии к дополнительным задачам.
+- **История и аналитика**: таблица по месяцам (январь–ноябрь) показывает динамику поступлений и задолженности; итоговые суммы сводятся в отдельный блок и могут отображаться в виде отчёта/таблицы.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Основные сущности и атрибуты
+| Сущность | Ключевые поля |
+| --- | --- |
+| `users` | `name`, `email`, `password`, `role` (worker/client/admin/accountant) |
+| `orders` (будет создана) | `client_id`, `worker_id`, `description`, `images`, `payment_type`, `payment_money`, `status`, `due_date` |
 
-### Premium Partners
+> Вся логика должна придерживаться принятого в проекте стиля Laravel: Eloquent-модели, миграции с явными названиями, контроллеры в пространстве имён `App\Http\Controllers`.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Технологический стек
+- PHP 8.2+, Laravel 12, Sanctum для аутентификации.
+- Vite и Laravel Mix стек по умолчанию из свежего шаблона.
+- Очереди, кэш и Job-таблицы подготовлены базовыми миграциями.
 
-## Contributing
+## Планы развития
+1. Создать модели/миграции для заказов и ролей пользователей.
+2. Реализовать кабинет клиента с возможностью загружать фотографии и отслеживать статус.
+3. Кабинет работника с очередью задач и отметками о выполнении.
+4. Панель администратора для распределения задач и контроля SLA.
+5. Модуль бухгалтерии: отчёты по оплатам, экспорт данных, подтверждение закрытия заказов.
+6. Уведомления (email/чат) для ключевых событий.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Локальный запуск
+```bash
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate
+npm install
+npm run dev
+php artisan serve
+```
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Подход к развитию документа
+README служит живым документом: по мере появления новых модулей сюда будут добавляться разделы с описанием бизнес-логики, API, сценариев работы ролей и правилами тестирования. Предложения и уточнения фиксируйте прямо в этом файле, чтобы команда имела единый источник правды.
