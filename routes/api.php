@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OrderController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -26,4 +27,14 @@ Route::middleware(['auth:sanctum', 'role:worker'])->get('/worker/ping', function
         'message' => 'Доступ работника подтверждён.',
         'user' => $request->user(),
     ]);
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{order}', [OrderController::class, 'show']);
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::put('/orders/{order}', [OrderController::class, 'update']);
+    Route::post('/orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
 });
