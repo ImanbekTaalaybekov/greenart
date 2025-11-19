@@ -36,12 +36,10 @@ class OrderController extends Controller
     {
         $data = $request->validated();
 
-        // если входит в обязанности — сумма должна быть NULL
         if ($data['payment_type'] === 'included') {
             $data['payment_money'] = null;
         }
 
-        // клиент создаёт от своего имени; админ может создать за клиента, если client_id не прислан — ставим текущего
         $data['client_id'] = $data['client_id'] ?? $request->user()->id;
 
         $order = DB::transaction(function () use ($data, $request) {
@@ -74,7 +72,6 @@ class OrderController extends Controller
             $data['payment_money'] = null;
         }
 
-        // бухгалтер может менять только сумму/тип оплаты; защитимся от лишних полей на всякий случай
         if ($request->user()->role === 'accountant') {
             $data = array_intersect_key($data, array_flip(['payment_type','payment_money']));
         }

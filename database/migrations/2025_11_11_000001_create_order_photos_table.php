@@ -9,10 +9,10 @@ return new class extends Migration {
         Schema::create('order_photos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->string('path');           // storage path (disk 'public')
-            $table->string('original_name');  // имя файла у клиента
+            $table->string('path');           
+            $table->string('original_name'); 
             $table->string('mime_type')->nullable();
-            $table->unsignedBigInteger('size')->nullable(); // bytes
+            $table->unsignedBigInteger('size')->nullable();
             $table->timestamps();
         });
     }
