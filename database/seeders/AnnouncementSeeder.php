@@ -20,11 +20,6 @@ class AnnouncementSeeder extends Seeder
         $admin = User::query()->where('role', User::ROLE_ADMIN)->first();
 
         if (! $admin) {
-            $this->call(UserSeeder::class);
-            $admin = User::query()->where('role', User::ROLE_ADMIN)->first();
-        }
-
-        if (! $admin) {
             return;
         }
 
