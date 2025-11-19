@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Order;
 use App\Models\OrderReport;
 use App\Models\OrderReportPhoto;
-use App\Models\OrderSchedule;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
@@ -22,12 +21,14 @@ class OrderSeeder extends Seeder
             return;
         }
 
+        $client->update(['default_worker_id' => $worker->id]);
+
         $orders = [
             [
                 'description' => 'Еженедельный полив клумб во дворе.',
                 'payment_type' => 'included',
                 'payment_money' => null,
-                'status' => 'assigned',
+                'status' => 'in_progress',
             ],
             [
                 'description' => 'Доп. обрезка кустарника у входа.',
@@ -49,17 +50,11 @@ class OrderSeeder extends Seeder
 
             $date = now()->addDays($index)->toDateString();
 
-            $schedule = OrderSchedule::create([
-                'order_id' => $order->id,
-                'worker_id' => $worker->id,
-                'scheduled_for' => $date,
-                'status' => $index === 0 ? 'done' : 'planned',
-            ]);
-
             if ($index === 0) {
                 $report = OrderReport::create([
                     'order_id' => $order->id,
                     'worker_id' => $worker->id,
+                    'work_type' => $order->payment_type === 'included' ? 'included' : 'extra',
                     'report_date' => $date,
                     'comment' => 'Полив и прополка завершены без замечаний.',
                     'completed_at' => now()->addDays($index)->setTime(15, 0),
@@ -77,5 +72,6 @@ class OrderSeeder extends Seeder
                 ]);
             }
         }
+
     }
 }

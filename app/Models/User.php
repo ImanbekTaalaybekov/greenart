@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -28,6 +29,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'default_worker_id',
     ];
 
     /**
@@ -58,5 +60,10 @@ class User extends Authenticatable
         $roles = $roles ?: [self::ROLE_CLIENT];
 
         return in_array($this->role, $roles, true);
+    }
+
+    public function defaultWorker(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'default_worker_id');
     }
 }

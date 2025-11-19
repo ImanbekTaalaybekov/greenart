@@ -6,50 +6,61 @@ use App\Http\Requests\StoreOrderReportRequest;
 use App\Models\Order;
 use App\Models\OrderReport;
 use App\Models\OrderReportPhoto;
-use App\Models\OrderSchedule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class WorkerTaskController extends Controller
 {
     public function tasks(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'date' => ['required', 'date'],
+            'status' => ['nullable', Rule::in(['pending', 'assigned', 'in_progress', 'done', 'cancelled'])],
+            'type' => ['nullable', Rule::in(['included', 'extra'])],
         ]);
 
         $workerId = $request->user()->id;
 
-        $tasks = OrderSchedule::query()
+        $query = Order::query()
             ->with([
-                'order.client',
-                'order.photos',
-                'order.reports' => function ($query) use ($data, $workerId) {
-                    $query->where('report_date', $data['date'])
-                          ->where('worker_id', $workerId)
-                          ->with('photos');
-                },
+                'client',
+                'photos',
+                'reports' => fn ($q) => $q->where('worker_id', $workerId)->with('photos'),
             ])
             ->where('worker_id', $workerId)
-            ->whereDate('scheduled_for', $data['date'])
-            ->orderBy('scheduled_for')
-            ->get();
+            ->orderByDesc('created_at');
 
-        return response()->json($tasks);
+        if ($status = $data['status'] ?? null) {
+            $query->where('status', $status);
+        } else {
+            $query->whereNotIn('status', ['done', 'cancelled']);
+        }
+
+        if ($type = $data['type'] ?? null) {
+            $query->where('payment_type', $type);
+        }
+
+        return response()->json($query->get());
     }
 
     public function reports(Request $request): JsonResponse
     {
         $data = $request->validate([
             'date' => ['required', 'date'],
+            'type' => ['nullable', Rule::in(['included', 'extra'])],
         ]);
 
-        $reports = OrderReport::with(['order.client', 'photos'])
+        $query = OrderReport::with(['order.client', 'photos'])
             ->where('worker_id', $request->user()->id)
             ->whereDate('report_date', $data['date'])
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at');
+
+        if ($type = $data['type'] ?? null) {
+            $query->where('work_type', $type);
+        }
+
+        $reports = $query->get();
 
         return response()->json($reports);
     }
@@ -58,23 +69,14 @@ class WorkerTaskController extends Controller
     {
         $worker = $request->user();
         $reportDate = $request->date('report_date');
+        $workType = $order->payment_type === 'included' ? 'included' : 'extra';
 
-        $schedule = OrderSchedule::where('order_id', $order->id)
-            ->where('worker_id', $worker->id)
-            ->whereDate('scheduled_for', $reportDate)
-            ->first();
-
-        if (!$schedule) {
-            return response()->json([
-                'message' => 'Задача на указанную дату отсутствует в графике.',
-            ], 422);
-        }
-
-        $report = DB::transaction(function () use ($request, $order, $worker, $reportDate, $schedule) {
+        $report = DB::transaction(function () use ($request, $order, $worker, $reportDate) {
             $report = OrderReport::updateOrCreate(
                 ['order_id' => $order->id, 'report_date' => $reportDate],
                 [
                     'worker_id' => $worker->id,
+                    'work_type' => $order->payment_type === 'included' ? 'included' : 'extra',
                     'comment' => $request->input('comment'),
                     'completed_at' => now(),
                 ]
@@ -93,11 +95,8 @@ class WorkerTaskController extends Controller
                 }
             }
 
-            $schedule->update(['status' => 'done']);
-
-            if ($order->status !== 'done') {
-                $nextStatus = $order->status === 'pending' ? 'in_progress' : $order->status;
-                $order->update(['status' => $nextStatus]);
+            if (in_array($order->status, ['pending', 'assigned'], true)) {
+                $order->update(['status' => 'in_progress']);
             }
 
             return $report->load('photos');
@@ -105,4 +104,5 @@ class WorkerTaskController extends Controller
 
         return response()->json($report);
     }
+
 }

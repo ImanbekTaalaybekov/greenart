@@ -11,6 +11,7 @@ class OrderReport extends Model
     protected $fillable = [
         'order_id',
         'worker_id',
+        'work_type',
         'report_date',
         'comment',
         'completed_at',

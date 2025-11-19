@@ -4,9 +4,8 @@ namespace App\Http\Requests;
 
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdateOrderScheduleRequest extends FormRequest
+class SetClientWorkerRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,9 +15,7 @@ class UpdateOrderScheduleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'worker_id'     => ['sometimes', 'exists:users,id'],
-            'scheduled_for' => ['sometimes', 'date'],
-            'status'        => ['sometimes', Rule::in(['planned', 'done', 'cancelled'])],
+            'worker_id' => ['required', 'exists:users,id'],
         ];
     }
 }
