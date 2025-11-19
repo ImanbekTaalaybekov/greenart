@@ -10,7 +10,6 @@ class ClassifyOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        /** @var Order $order */
         $order = $this->route('order');
         return $this->user() && $order && $this->user()->can('classify', $order);
     }

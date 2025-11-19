@@ -9,7 +9,6 @@ class StoreOrderReportRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        /** @var Order $order */
         $order = $this->route('order');
 
         return $this->user() && $order && $order->worker_id === $this->user()->id;
