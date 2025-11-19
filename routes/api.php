@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\AnnouncementController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -37,4 +38,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/orders/{order}', [OrderController::class, 'update']);
     Route::post('/orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
     Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/announcements', [AnnouncementController::class, 'index']);
+    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);
+    Route::post('/announcements', [AnnouncementController::class, 'store']);
+    Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update']);
+    Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy']);
+    Route::post('/announcements/{announcement}/read', [AnnouncementController::class, 'markRead']);
 });
