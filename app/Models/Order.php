@@ -33,6 +33,10 @@ class Order extends Model
         return $this->hasMany(OrderPhoto::class);
     }
 
+    public function reports(): HasMany {
+        return $this->hasMany(OrderReport::class);
+    }
+
     public function isIncluded(): bool {
         return $this->payment_type === 'included';
     }

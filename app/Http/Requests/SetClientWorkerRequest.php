@@ -2,15 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\Order;
 
-class AssignWorkerRequest extends FormRequest
+class SetClientWorkerRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $order = $this->route('order');
-        return $this->user() && $order && $this->user()->can('assignWorker', $order);
+        return $this->user()?->hasRole(User::ROLE_ADMIN) ?? false;
     }
 
     public function rules(): array

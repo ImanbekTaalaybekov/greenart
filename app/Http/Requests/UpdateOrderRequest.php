@@ -10,7 +10,6 @@ class UpdateOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        /** @var Order $order */
         $order = $this->route('order');
         return $this->user() && $order && $this->user()->can('update', $order);
     }
@@ -30,6 +29,5 @@ class UpdateOrderRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // ничто, но место для нормализации есть
     }
 }

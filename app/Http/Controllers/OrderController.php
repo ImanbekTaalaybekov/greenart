@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AssignWorkerRequest;
+use App\Http\Requests\ClassifyOrderRequest;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
 use App\Models\OrderPhoto;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -41,6 +43,15 @@ class OrderController extends Controller
         }
 
         $data['client_id'] = $data['client_id'] ?? $request->user()->id;
+
+        $client = $request->user()->id === $data['client_id']
+            ? $request->user()
+            : User::find($data['client_id']);
+
+        if (($data['worker_id'] ?? null) === null && $client?->default_worker_id) {
+            $data['worker_id'] = $client->default_worker_id;
+            $data['status'] = $data['status'] ?? 'assigned';
+        }
 
         $order = DB::transaction(function () use ($data, $request) {
             $order = Order::create($data);
@@ -100,12 +111,29 @@ class OrderController extends Controller
 
     public function assignWorker(AssignWorkerRequest $request, Order $order): JsonResponse
     {
+        $this->authorize('assignWorker', $order);
+
         $order->update([
             'worker_id' => $request->integer('worker_id'),
             'status'    => $order->status === 'pending' ? 'assigned' : $order->status,
         ]);
 
         return response()->json($order->fresh(['worker']));
+    }
+
+    public function classify(ClassifyOrderRequest $request, Order $order): JsonResponse
+    {
+        $this->authorize('classify', $order);
+
+        $data = $request->validated();
+
+        if ($data['payment_type'] === 'included') {
+            $data['payment_money'] = null;
+        }
+
+        $order->update($data);
+
+        return response()->json($order->fresh());
     }
 
     public function destroy(Order $order): JsonResponse
