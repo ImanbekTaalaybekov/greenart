@@ -37,9 +37,11 @@ class OrderController extends Controller
     public function store(StoreOrderRequest $request): JsonResponse
     {
         $data = $request->validated();
-        if (($data['payment_type'] ?? null) === 'included') {
+
+        if ($data['payment_type'] === 'included') {
             $data['payment_money'] = null;
         }
+
         $data['client_id'] = $data['client_id'] ?? $request->user()->id;
 
         $client = $request->user()->id === $data['client_id']
@@ -80,6 +82,7 @@ class OrderController extends Controller
         if (($data['payment_type'] ?? null) === 'included') {
             $data['payment_money'] = null;
         }
+
         if ($request->user()->role === 'accountant') {
             $data = array_intersect_key($data, array_flip(['payment_type','payment_money']));
         }

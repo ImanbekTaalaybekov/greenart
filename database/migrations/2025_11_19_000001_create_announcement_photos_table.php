@@ -6,11 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        Schema::create('order_photos', function (Blueprint $table) {
+        Schema::create('announcement_photos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->string('path');           
-            $table->string('original_name'); 
+            $table->foreignId('announcement_id')->constrained('announcements')->cascadeOnDelete();
+            $table->string('path');
+            $table->string('original_name');
             $table->string('mime_type')->nullable();
             $table->unsignedBigInteger('size')->nullable();
             $table->timestamps();
@@ -18,7 +18,6 @@ return new class extends Migration {
     }
 
     public function down(): void {
-        Schema::dropIfExists('order_photos');
+        Schema::dropIfExists('announcement_photos');
     }
 };
-
