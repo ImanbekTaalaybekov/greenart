@@ -10,6 +10,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->foreignId('worker_id')->constrained('users')->cascadeOnDelete();
+            $table->enum('work_type', ['included', 'extra'])->default('extra');
             $table->date('report_date');
             $table->text('comment')->nullable();
             $table->timestamp('completed_at')->nullable();
