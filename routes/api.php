@@ -8,35 +8,17 @@ use App\Http\Controllers\AnnouncementController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/user/request-phone-verification', [AuthController::class, 'requestPhoneVerification'])->middleware('auth:sanctum');
-Route::post('/user/confirm-phone-verification', [AuthController::class, 'confirmPhoneVerification'])->middleware('auth:sanctum');
 Route::put('/user', [AuthController::class, 'update'])->middleware('auth:sanctum');
 Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-Route::post('/user/fcm-token', [AuthController::class, 'updateFcmToken'])->middleware('auth:sanctum');
-Route::post('/user/fcm-token-remove', [AuthController::class, 'removeFcmToken'])->middleware('auth:sanctum');
 
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/ping', function (Request $request) {
-        return response()->json([
-            'message' => 'Админский доступ подтверждён.',
-            'user' => $request->user(),
-        ]);
-    });
-
     Route::patch('/orders/{order}/classification', [OrderController::class, 'classify']);
     Route::post('/orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
     Route::post('/clients/{client}/default-worker', [ClientWorkerController::class, 'setDefaultWorker']);
 });
 
 Route::middleware(['auth:sanctum', 'role:worker'])->prefix('worker')->group(function () {
-    Route::get('/ping', function (Request $request) {
-        return response()->json([
-            'message' => 'Доступ работника подтверждён.',
-            'user' => $request->user(),
-        ]);
-    });
-
     Route::get('/tasks', [WorkerTaskController::class, 'tasks']);
     Route::post('/tasks/{order}/report', [WorkerTaskController::class, 'storeReport']);
     Route::get('/reports', [WorkerTaskController::class, 'reports']);
