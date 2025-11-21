@@ -4,14 +4,13 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\Order;
 
 class UpdateOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
         $order = $this->route('order');
-        return $this->user() && $order && $this->user()->can('update', $order);
+        return $order && $this->user()->can('update', $order);
     }
 
     public function rules(): array
@@ -25,9 +24,5 @@ class UpdateOrderRequest extends FormRequest
             'photos'        => ['nullable', 'array', 'max:10'],
             'photos.*'      => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
-    }
-
-    protected function prepareForValidation(): void
-    {
     }
 }

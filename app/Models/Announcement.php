@@ -24,7 +24,4 @@ class Announcement extends Model
         return $this->hasMany(AnnouncementPhoto::class);
     }
 
-    public function reads(): HasMany {
-        return $this->hasMany(AnnouncementRead::class);
-    }
 }

@@ -8,19 +8,18 @@ use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
 use App\Models\OrderPhoto;
-use App\Models\User;
+use App\Services\Order\CreateOrderService;
+use App\Services\PhotoService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
     public function index(): JsonResponse
     {
-        auth()->user()->can('viewAny', Order::class);
         $this->authorize('viewAny', Order::class);
 
         $query = Order::query()
-            ->with(['client','worker','photos'])
+            ->with(['client', 'worker', 'photos'])
             ->when(request('status'), fn($q) => $q->where('status', request('status')))
             ->when(request('worker_id'), fn($q) => $q->where('worker_id', request('worker_id')))
             ->when(request('client_id'), fn($q) => $q->where('client_id', request('client_id')))
@@ -32,51 +31,26 @@ class OrderController extends Controller
     public function show(Order $order): JsonResponse
     {
         $this->authorize('view', $order);
-        return response()->json($order->load(['client','worker','photos']));
+
+        return response()->json($order->load(['client', 'worker', 'photos']));
     }
 
-    public function store(StoreOrderRequest $request): JsonResponse
+    public function store(StoreOrderRequest $request, CreateOrderService $createOrderService, PhotoService $photoService): JsonResponse
     {
-        $data = $request->validated();
+        $order = $createOrderService->apply($request->validated());
 
-        if ($data['payment_type'] === 'included') {
-            $data['payment_money'] = null;
-        }
+        $photoService->apply(
+            $order,
+            $request,
+            'orders',
+            OrderPhoto::class,
+            'order_id'
+        );
 
-        $data['client_id'] = $data['client_id'] ?? $request->user()->id;
-
-        $client = $request->user()->id === $data['client_id']
-            ? $request->user()
-            : User::find($data['client_id']);
-
-        if (($data['worker_id'] ?? null) === null && $client?->default_worker_id) {
-            $data['worker_id'] = $client->default_worker_id;
-            $data['status'] = $data['status'] ?? 'assigned';
-        }
-
-        $order = DB::transaction(function () use ($data, $request) {
-            $order = Order::create($data);
-
-            if ($request->hasFile('photos')) {
-                foreach ($request->file('photos') as $file) {
-                    $path = $file->store("orders/{$order->id}", 'public');
-                    OrderPhoto::create([
-                        'order_id'      => $order->id,
-                        'path'          => $path,
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type'     => $file->getClientMimeType(),
-                        'size'          => $file->getSize(),
-                    ]);
-                }
-            }
-
-            return $order;
-        });
-
-        return response()->json($order->load('photos'), 201);
+        return response()->json($order->load(['worker', 'photos']), 201);
     }
 
-    public function update(UpdateOrderRequest $request, Order $order): JsonResponse
+    public function update(UpdateOrderRequest $request, Order $order, PhotoService $photoService): JsonResponse
     {
         $data = $request->validated();
 
@@ -84,30 +58,17 @@ class OrderController extends Controller
             $data['payment_money'] = null;
         }
 
-        if ($request->user()->role === 'accountant') {
-            $data = array_intersect_key($data, array_flip(['payment_type','payment_money']));
-        }
+        $order->update($data);
 
-        $order = DB::transaction(function () use ($order, $data, $request) {
-            $order->update($data);
+        $photoService->apply(
+            $order,
+            $request,
+            'orders',
+            OrderPhoto::class,
+            'order_id'
+        );
 
-            if ($request->hasFile('photos')) {
-                foreach ($request->file('photos') as $file) {
-                    $path = $file->store("orders/{$order->id}", 'public');
-                    OrderPhoto::create([
-                        'order_id'      => $order->id,
-                        'path'          => $path,
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type'     => $file->getClientMimeType(),
-                        'size'          => $file->getSize(),
-                    ]);
-                }
-            }
-
-            return $order->load('photos');
-        });
-
-        return response()->json($order);
+        return response()->json($order->load('photos'));
     }
 
     public function assignWorker(AssignWorkerRequest $request, Order $order): JsonResponse
@@ -116,7 +77,7 @@ class OrderController extends Controller
 
         $order->update([
             'worker_id' => $request->integer('worker_id'),
-            'status'    => $order->status === 'pending' ? 'assigned' : $order->status,
+            'status' => $order->status === 'pending' ? 'assigned' : $order->status,
         ]);
 
         return response()->json($order->fresh(['worker']));
@@ -141,6 +102,7 @@ class OrderController extends Controller
     {
         $this->authorize('delete', $order);
         $order->delete();
-        return response()->json(['deleted' => true]);
+
+        return response()->json([]);
     }
 }
