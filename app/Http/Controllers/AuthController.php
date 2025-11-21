@@ -15,7 +15,9 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'login' => ['required', 'string', 'max:255', 'unique:users,login'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:255', 'unique:users,phone'],
             'role' => ['required', 'string', 'in:client,admin,worker,accountant'],
             'password' => ['required', 'string', 'min:8'],
             'device' => ['nullable', 'string', 'max:255'],
@@ -23,7 +25,9 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $data['name'],
+            'login' => $data['login'],
             'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
         ]);
@@ -39,12 +43,14 @@ class AuthController extends Controller
     public function auth(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'email' => ['required', 'email'],
+            'login' => ['required', 'string'],
             'password' => ['required', 'string'],
             'device' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user = User::where('email', $data['email'])->first();
+        $user = User::where('login', $data['login'])
+            ->orWhere('email', $data['login'])
+            ->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
             return response()->json([
@@ -73,7 +79,9 @@ class AuthController extends Controller
 
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
+            'login' => ['nullable', 'string', 'max:255', Rule::unique('users', 'login')->ignore($user->id)],
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['nullable', 'string', 'max:255', Rule::unique('users', 'phone')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8'],
         ]);
 

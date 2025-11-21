@@ -12,8 +12,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('role')->default('client');
-            $table->foreignId('default_worker_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('login')->unique();
             $table->string('email')->unique();
+            $table->string('phone')->nullable()->unique();
+            $table->foreignId('default_worker_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

@@ -14,21 +14,25 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Администратор',
                 'email' => 'admin@greenart.test',
+                'login' => 'admin',
                 'role' => User::ROLE_ADMIN,
             ],
             [
                 'name' => 'Садовник Иван',
                 'email' => 'worker@greenart.test',
+                'login' => 'worker',
                 'role' => User::ROLE_WORKER,
             ],
             [
                 'name' => 'Клиент Ольга',
                 'email' => 'client@greenart.test',
+                'login' => 'client',
                 'role' => User::ROLE_CLIENT,
             ],
             [
                 'name' => 'Бухгалтер Анна',
                 'email' => 'accountant@greenart.test',
+                'login' => 'accountant',
                 'role' => User::ROLE_ACCOUNTANT,
             ],
         ];

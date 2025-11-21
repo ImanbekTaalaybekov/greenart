@@ -13,26 +13,12 @@ Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/ping', function (Request $request) {
-        return response()->json([
-            'message' => 'Админский доступ подтверждён.',
-            'user' => $request->user(),
-        ]);
-    });
-
     Route::patch('/orders/{order}/classification', [OrderController::class, 'classify']);
     Route::post('/orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
     Route::post('/clients/{client}/default-worker', [ClientWorkerController::class, 'setDefaultWorker']);
 });
 
 Route::middleware(['auth:sanctum', 'role:worker'])->prefix('worker')->group(function () {
-    Route::get('/ping', function (Request $request) {
-        return response()->json([
-            'message' => 'Доступ работника подтверждён.',
-            'user' => $request->user(),
-        ]);
-    });
-
     Route::get('/tasks', [WorkerTaskController::class, 'tasks']);
     Route::post('/tasks/{order}/report', [WorkerTaskController::class, 'storeReport']);
     Route::get('/reports', [WorkerTaskController::class, 'reports']);
