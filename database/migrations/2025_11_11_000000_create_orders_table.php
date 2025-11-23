@@ -15,7 +15,7 @@ return new class extends Migration {
 
             $table->text('description');
 
-            $table->enum('payment_type', ['included', 'extra'])->index();
+            $table->enum('payment_type', ['included', 'extra'])->nullable()->index();
 
             $table->decimal('payment_money', 12, 2)->nullable();
 
