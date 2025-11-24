@@ -5,6 +5,7 @@ use App\Http\Controllers\OrderPhotoController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AnnouncementPhotoController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -26,6 +27,7 @@ Route::middleware(['auth:sanctum', 'role:worker'])->prefix('worker')->group(func
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('order-photos', OrderPhotoController::class)->only(['destroy']);
+    Route::apiResource('announcement-photos', AnnouncementPhotoController::class)->only(['destroy']);
     Route::apiResource('announcements', AnnouncementController::class);
     Route::apiResource('orders', OrderController::class);
 });
