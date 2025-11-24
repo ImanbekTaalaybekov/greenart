@@ -9,7 +9,7 @@ class CreateOrderService
 {
     public function apply($data)
     {
-        if ($data['payment_type'] === 'included') {
+        if (($data['payment_type'] ?? null) === 'included') {
             $data['payment_money'] = null;
         }
 
@@ -17,7 +17,7 @@ class CreateOrderService
 
         $client = auth()->user()->id === $data['client_id'] ? auth()->user() : User::find($data['client_id']);
 
-        if (isset($data['worker_id']) && is_null($data['worker_id'])) {
+        if (($data['worker_id'] ?? null) === null && $client?->default_worker_id) {
             $data['worker_id'] = $client->default_worker_id;
             $data['status'] = $data['status'] ?? 'assigned';
         }

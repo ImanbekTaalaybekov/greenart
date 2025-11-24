@@ -1,11 +1,12 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\OrderPhotoController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AnnouncementController;
-use App\Http\Controllers\AnnouncementPhotoController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClientWorkerController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderPhotoController;
+use App\Http\Controllers\WorkerTaskController;
+use Illuminate\Support\Facades\Route;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
