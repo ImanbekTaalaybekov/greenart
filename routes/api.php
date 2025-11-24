@@ -28,6 +28,7 @@ Route::middleware(['auth:sanctum', 'role:worker'])->prefix('worker')->group(func
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('order-photos', OrderPhotoController::class)->only(['destroy']);
+    Route::apiResource('announcement-photos', AnnouncementPhotoController::class)->only(['destroy']);
     Route::apiResource('announcements', AnnouncementController::class);
     Route::apiResource('orders', OrderController::class);
 });
