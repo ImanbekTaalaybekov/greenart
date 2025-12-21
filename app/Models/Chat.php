@@ -21,7 +21,6 @@ class Chat extends Model
         return $this->hasMany(Message::class);
     }
     
-    // Для списка чатов (последнее сообщение)
     public function lastMessage()
     {
         return $this->hasOne(Message::class)->latestOfMany();
