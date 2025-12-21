@@ -30,8 +30,17 @@ class AuthController extends Controller
             'phone' => $data['phone'] ?? null,
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
+            'avatar' => $data['avatar'] ?? null,
         ]);
 
+        if (in_array($user->role, ['admin', 'worker'])) {
+            $generalChat = \App\Models\Chat::firstOrCreate(
+                ['type' => 'general'], 
+                ['title' => 'Общий чат (Green Art)']
+            );
+            $generalChat->participants()->attach($user->id);
+        }
+        
         $token = $user->createToken($data['device'] ?? 'api')->plainTextToken;
 
         return response()->json([
