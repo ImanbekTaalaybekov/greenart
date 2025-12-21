@@ -40,6 +40,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function chats()
+    {
+        return $this->belongsToMany(Chat::class, 'chat_user');
+    }
+
     public function hasRole(string ...$roles): bool
     {
         $roles = $roles ?: [self::ROLE_CLIENT];
