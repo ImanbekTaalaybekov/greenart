@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
-            $table->string('title')->nullable(); // Название чата
+            $table->string('title')->nullable();
             $table->string('type')->default('private'); 
             $table->timestamps();
         });
@@ -18,9 +18,9 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('chat_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Отправитель
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->text('content')->nullable();
-            $table->string('attachment_path')->nullable(); // Для фото/файлов
+            $table->string('attachment_path')->nullable();
             $table->timestamps();
         });
 

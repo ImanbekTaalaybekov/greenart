@@ -25,7 +25,7 @@ class ClientWorkerController extends Controller
 
         if (!$chat) {
             $chat = Chat::create([
-                'title' => 'Чат объекта: ' . $client->name, // Название для Админов/Воркеров
+                'title' => 'Чат объекта: ' . $client->name,
                 'type'  => 'client_group',
             ]);
 
