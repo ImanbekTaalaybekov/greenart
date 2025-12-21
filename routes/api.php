@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ChatController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -40,4 +41,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update']);
     Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy']);
     Route::post('/announcements/{announcement}/read', [AnnouncementController::class, 'markRead']);
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/chats', [ChatController::class, 'index']);
+    Route::get('/chats/{id}', [ChatController::class, 'show']);
+    Route::post('/chats/{id}/message', [ChatController::class, 'sendMessage']);
 });
