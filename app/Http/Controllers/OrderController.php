@@ -38,20 +38,25 @@ class OrderController extends Controller
     public function store(StoreOrderRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $user = $request->user();
+
+        if ($user->role === 'client') {
+            $data['client_id'] = $user->id;
+            $client = $user;
+        } else {
+            if (empty($data['client_id'])) {
+                abort(422, 'Администратор обязан указать client_id');
+            }
+            $client = User::find($data['client_id']);
+        }
+
+        if (empty($data['worker_id']) && $client?->default_worker_id) {
+            $data['worker_id'] = $client->default_worker_id;
+            $data['status'] = 'assigned';
+        }
 
         if ($data['payment_type'] === 'included') {
             $data['payment_money'] = null;
-        }
-
-        $data['client_id'] = $data['client_id'] ?? $request->user()->id;
-
-        $client = $request->user()->id === $data['client_id']
-            ? $request->user()
-            : User::find($data['client_id']);
-
-        if (($data['worker_id'] ?? null) === null && $client?->default_worker_id) {
-            $data['worker_id'] = $client->default_worker_id;
-            $data['status'] = $data['status'] ?? 'assigned';
         }
 
         $order = DB::transaction(function () use ($data, $request) {
@@ -73,7 +78,7 @@ class OrderController extends Controller
             return $order;
         });
 
-        return response()->json($order->load('photos'), 201);
+        return response()->json($order->load(['photos', 'client', 'worker']), 201);
     }
 
     public function update(UpdateOrderRequest $request, Order $order): JsonResponse
