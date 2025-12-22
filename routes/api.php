@@ -1,10 +1,12 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClientWorkerController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderPhotoController;
+use App\Http\Controllers\WorkerTaskController;
+use Illuminate\Support\Facades\Route;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -24,20 +26,9 @@ Route::middleware(['auth:sanctum', 'role:worker'])->prefix('worker')->group(func
     Route::get('/reports', [WorkerTaskController::class, 'reports']);
 });
 
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::get('/orders/{order}', [OrderController::class, 'show']);
-    Route::post('/orders', [OrderController::class, 'store']);
-    Route::put('/orders/{order}', [OrderController::class, 'update']);
-    Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
-});
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/announcements', [AnnouncementController::class, 'index']);
-    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);
-    Route::post('/announcements', [AnnouncementController::class, 'store']);
-    Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update']);
-    Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy']);
-    Route::post('/announcements/{announcement}/read', [AnnouncementController::class, 'markRead']);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::apiResource('order-photos', OrderPhotoController::class)->only(['destroy']);
+    Route::apiResource('announcement-photos', AnnouncementPhotoController::class)->only(['destroy']);
+    Route::apiResource('announcements', AnnouncementController::class);
+    Route::apiResource('orders', OrderController::class);
 });
