@@ -8,9 +8,11 @@ use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
 use App\Models\OrderPhoto;
+use App\Models\User;
 use App\Services\Order\CreateOrderService;
 use App\Services\PhotoService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -35,19 +37,50 @@ class OrderController extends Controller
         return response()->json($order->load(['client', 'worker', 'photos']));
     }
 
-    public function store(StoreOrderRequest $request, CreateOrderService $createOrderService, PhotoService $photoService): JsonResponse
+    public function store(StoreOrderRequest $request): JsonResponse
     {
-        $order = $createOrderService->apply($request->validated());
+        $data = $request->validated();
+        $user = $request->user();
 
-        $photoService->apply(
-            $order,
-            $request,
-            'orders',
-            OrderPhoto::class,
-            'order_id'
-        );
+        if ($user->role === 'client') {
+            $data['client_id'] = $user->id;
+            $client = $user;
+        } else {
+            if (empty($data['client_id'])) {
+                abort(422, 'Администратор обязан указать client_id');
+            }
+            $client = User::find($data['client_id']);
+        }
 
-        return response()->json($order->load(['worker', 'photos']), 201);
+        if (empty($data['worker_id']) && $client?->default_worker_id) {
+            $data['worker_id'] = $client->default_worker_id;
+            $data['status'] = 'assigned';
+        }
+
+        if ($data['payment_type'] === 'included') {
+            $data['payment_money'] = null;
+        }
+
+        $order = DB::transaction(function () use ($data, $request) {
+            $order = Order::create($data);
+
+            if ($request->hasFile('photos')) {
+                foreach ($request->file('photos') as $file) {
+                    $path = $file->storeS("orders/{$order->id}", 'public');
+                    OrderPhoto::create([
+                        'order_id'      => $order->id,
+                        'path'          => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime_type'     => $file->getClientMimeType(),
+                        'size'          => $file->getSize(),
+                    ]);
+                }
+            }
+
+            return $order;
+        });
+
+        return response()->json($order->load(['photos', 'client', 'worker']), 201);
     }
 
     public function update(UpdateOrderRequest $request, Order $order, PhotoService $photoService): JsonResponse
