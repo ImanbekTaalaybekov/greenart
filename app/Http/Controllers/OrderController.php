@@ -37,48 +37,17 @@ class OrderController extends Controller
         return response()->json($order->load(['client', 'worker', 'photos']));
     }
 
-    public function store(StoreOrderRequest $request): JsonResponse
+    public function store(StoreOrderRequest $request, CreateOrderService $createOrderService, PhotoService $photoService): JsonResponse
     {
-        $data = $request->validated();
-        $user = $request->user();
+        $order = $createOrderService->apply($request->validated());
 
-        if ($user->role === 'client') {
-            $data['client_id'] = $user->id;
-            $client = $user;
-        } else {
-            if (empty($data['client_id'])) {
-                abort(422, 'Администратор обязан указать client_id');
-            }
-            $client = User::find($data['client_id']);
-        }
-
-        if (empty($data['worker_id']) && $client?->default_worker_id) {
-            $data['worker_id'] = $client->default_worker_id;
-            $data['status'] = 'assigned';
-        }
-
-        if ($data['payment_type'] === 'included') {
-            $data['payment_money'] = null;
-        }
-
-        $order = DB::transaction(function () use ($data, $request) {
-            $order = Order::create($data);
-
-            if ($request->hasFile('photos')) {
-                foreach ($request->file('photos') as $file) {
-                    $path = $file->storeS("orders/{$order->id}", 'public');
-                    OrderPhoto::create([
-                        'order_id'      => $order->id,
-                        'path'          => $path,
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type'     => $file->getClientMimeType(),
-                        'size'          => $file->getSize(),
-                    ]);
-                }
-            }
-
-            return $order;
-        });
+        $photoService->apply(
+            $order,
+            $request,
+            'orders',
+            OrderPhoto::class,
+            'order_id'
+        );
 
         return response()->json($order->load(['photos', 'client', 'worker']), 201);
     }
