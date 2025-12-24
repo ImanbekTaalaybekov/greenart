@@ -8,18 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    protected $fillable = [
-        'client_id',
-        'worker_id',
-        'description',
-        'payment_type',
-        'payment_money',
-        'status',
-    ];
-
-    protected $casts = [
-        'payment_money' => 'decimal:2',
-    ];
+    // ... (свойства fillable и casts оставляем как были)
 
     public function client(): BelongsTo {
         return $this->belongsTo(User::class, 'client_id');
@@ -39,5 +28,14 @@ class Order extends Model
 
     public function isIncluded(): bool {
         return $this->payment_type === 'included';
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function (Order $order) {
+            $order->photos()->get()->each->delete();
+            
+            $order->reports()->get()->each->delete();
+        });
     }
 }
