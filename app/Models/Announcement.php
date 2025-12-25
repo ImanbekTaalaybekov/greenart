@@ -24,4 +24,10 @@ class Announcement extends Model
         return $this->hasMany(AnnouncementPhoto::class);
     }
 
+    protected static function booted()
+    {
+        static::deleting(function (Announcement $announcement) {
+            $announcement->photos()->get()->each->delete();
+        });
+    }
 }

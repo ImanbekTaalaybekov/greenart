@@ -9,7 +9,7 @@ class OrderPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(User::ROLE_ADMIN, User::ROLE_ACCOUNTANT);
+        return true; 
     }
 
     public function view(User $user, Order $order): bool
@@ -31,23 +31,14 @@ class OrderPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole(User::ROLE_CLIENT, User::ROLE_ADMIN);
+        return $user->hasRole(User::ROLE_ADMIN);
     }
 
     public function update(User $user, Order $order): bool
     {
-        if ($user->hasRole(User::ROLE_ADMIN)) {
+        if ($user->hasRole(User::ROLE_ADMIN, User::ROLE_ACCOUNTANT)) {
             return true;
         }
-
-        if ($user->hasRole(User::ROLE_ACCOUNTANT)) {
-            return true;
-        }
-
-        if ($user->hasRole(User::ROLE_CLIENT)) {
-            return $order->client_id === $user->id;
-        }
-
         return false;
     }
 

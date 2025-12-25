@@ -34,7 +34,7 @@ class WorkerTaskController extends Controller
         if ($status = $data['status'] ?? null) {
             $query->where('status', $status);
         } else {
-            $query->whereNotIn('status', ['done', 'cancelled']);
+            $query->whereNotIn('status', ['cancelled']);
         }
 
         if ($type = $data['type'] ?? null) {
@@ -46,7 +46,7 @@ class WorkerTaskController extends Controller
 
     public function reports(Request $request): JsonResponse
     {
-        $data = $request->validate([
+         $data = $request->validate([
             'date' => ['required', 'date'],
             'type' => ['nullable', Rule::in(['included', 'extra'])],
         ]);
@@ -60,18 +60,16 @@ class WorkerTaskController extends Controller
             $query->where('work_type', $type);
         }
 
-        $reports = $query->get();
-
-        return response()->json($reports);
+        return response()->json($query->get());
     }
 
     public function storeReport(StoreOrderReportRequest $request, Order $order): JsonResponse
     {
         $worker = $request->user();
         $reportDate = $request->date('report_date');
-        $workType = $order->payment_type === 'included' ? 'included' : 'extra';
+        $isCompleted = $request->boolean('is_completed');
 
-        $report = DB::transaction(function () use ($request, $order, $worker, $reportDate) {
+        $report = DB::transaction(function () use ($request, $order, $worker, $reportDate, $isCompleted) {
             $report = OrderReport::updateOrCreate(
                 ['order_id' => $order->id, 'report_date' => $reportDate],
                 [
@@ -95,7 +93,9 @@ class WorkerTaskController extends Controller
                 }
             }
 
-            if (in_array($order->status, ['pending', 'assigned'], true)) {
+            if ($isCompleted) {
+                $order->update(['status' => 'done']);
+            } elseif (in_array($order->status, ['pending', 'assigned'], true)) {
                 $order->update(['status' => 'in_progress']);
             }
 
@@ -104,5 +104,4 @@ class WorkerTaskController extends Controller
 
         return response()->json($report);
     }
-
 }
