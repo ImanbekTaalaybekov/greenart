@@ -7,6 +7,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderPhotoController;
 use App\Http\Controllers\WorkerTaskController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ChatController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -31,4 +32,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('announcement-photos', AnnouncementPhotoController::class)->only(['destroy']);
     Route::apiResource('announcements', AnnouncementController::class);
     Route::apiResource('orders', OrderController::class);
+});
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/chats', [ChatController::class, 'index']);
+    Route::post('/chats', [ChatController::class, 'store']);
+    Route::get('/chats/{chat}/messages', [ChatController::class, 'messages']);
+    Route::post('/chats/{chat}/messages', [ChatController::class, 'sendMessage']);
 });
