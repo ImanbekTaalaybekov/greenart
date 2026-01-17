@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientWorkerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderPhotoController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkerTaskController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
@@ -19,6 +20,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::patch('/orders/{order}/classification', [OrderController::class, 'classify']);
     Route::post('/orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
     Route::post('/clients/{client}/default-worker', [ClientWorkerController::class, 'setDefaultWorker']);
+    Route::get('/clients', [UserController::class, 'clients']);
+    Route::get('/workers', [UserController::class, 'workers']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::patch('/users/{user}', [UserController::class, 'update']);
 });
 
 Route::middleware(['auth:sanctum', 'role:worker'])->prefix('worker')->group(function () {
@@ -39,4 +44,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/chats', [ChatController::class, 'store']);
     Route::get('/chats/{chat}/messages', [ChatController::class, 'messages']);
     Route::post('/chats/{chat}/messages', [ChatController::class, 'sendMessage']);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin,client'])->group(function () {
+    Route::get('/workers/{worker}/schedule', [UserController::class, 'workerSchedule']);
 });

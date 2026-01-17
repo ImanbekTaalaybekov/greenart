@@ -91,6 +91,6 @@ class OrderController extends Controller
         $this->authorize('delete', $order);
         $order->delete();
 
-        return response()->json(['message' => 'Заявка успешно удалена']);
+        return response()->json('удалено');
     }
 }

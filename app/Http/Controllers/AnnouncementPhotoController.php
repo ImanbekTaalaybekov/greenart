@@ -11,6 +11,6 @@ class AnnouncementPhotoController extends Controller
     {
         $announcementPhoto->delete();
 
-        return response()->json([]);
+        return response()->json('удалено');
     }
 }
