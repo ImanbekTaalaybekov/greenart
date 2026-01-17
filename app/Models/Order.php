@@ -8,7 +8,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    // ... (свойства fillable и casts оставляем как были)
+    protected $fillable = [
+        'client_id',
+        'worker_id',
+        'description',
+        'payment_type',
+        'payment_money',
+        'status',
+    ];
+
+    protected $casts = [
+        'payment_money' => 'decimal:2',
+    ];
 
     public function client(): BelongsTo {
         return $this->belongsTo(User::class, 'client_id');
