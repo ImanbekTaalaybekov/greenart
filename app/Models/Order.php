@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    // ... (свойства fillable и casts оставляем как были)
+    protected $fillable = [
+        'client_id',
+        'worker_id',
+        'description',
+        'payment_type',
+        'payment_money',
+        'status',
+    ];
 
     public function client(): BelongsTo {
         return $this->belongsTo(User::class, 'client_id');
@@ -34,7 +41,7 @@ class Order extends Model
     {
         static::deleting(function (Order $order) {
             $order->photos()->get()->each->delete();
-            
+
             $order->reports()->get()->each->delete();
         });
     }

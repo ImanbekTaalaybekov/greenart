@@ -8,11 +8,6 @@ use Illuminate\Validation\Rule;
 
 class UpdateOrderRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        $order = $this->route('order');
-        return $order && $this->user()->can('update', $order);
-    }
 
     public function rules(): array
     {

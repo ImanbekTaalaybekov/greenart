@@ -32,10 +32,7 @@ class AuthController extends Controller
             'role' => $data['role'],
         ]);
 
-        $token = $user->createToken($data['device'] ?? 'api')->plainTextToken;
-
         return response()->json([
-            'token' => $token,
             'user' => new UserResource($user),
         ], 201);
     }
