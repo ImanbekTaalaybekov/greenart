@@ -44,6 +44,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/chats', [ChatController::class, 'store']);
     Route::get('/chats/{chat}/messages', [ChatController::class, 'messages']);
     Route::post('/chats/{chat}/messages', [ChatController::class, 'sendMessage']);
+    Route::post('/chats/{chat}/read', [ChatController::class, 'markRead']);
+    Route::post('/chats/{chat}/update', [ChatController::class, 'update']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,client'])->group(function () {
