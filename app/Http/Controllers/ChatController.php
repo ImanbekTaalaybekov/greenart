@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ChatMessageResource;
 use App\Models\Chat;
 use App\Models\ChatMessage;
-use App\Models\User;
+use App\Models\ChatMessageRead;
+use App\Services\PhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 
 class ChatController extends Controller
 {
@@ -33,11 +35,66 @@ class ChatController extends Controller
         }
 
         $messages = $chat->messages()
-            ->with('sender')
+            ->with(['sender', 'reads'])
             ->latest()
             ->paginate(50);
 
         return ChatMessageResource::collection($messages)->response();
+    }
+
+    public function markRead(Request $request, Chat $chat): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$chat->participants()->where('user_id', $user->id)->exists()) {
+            abort(403, 'Нет доступа к чату.');
+        }
+
+        $unreadMessages = $chat->messages()
+            ->where('user_id', '!=', $user->id)
+            ->whereDoesntHave('reads', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->pluck('id');
+
+        if ($unreadMessages->isEmpty()) {
+             return response()->json(['status' => 'nothing_to_update']);
+        }
+
+        $records = $unreadMessages->map(fn($id) => [
+            'chat_message_id' => $id,
+            'user_id' => $user->id,
+            'read_at' => now(),
+        ])->toArray();
+
+        ChatMessageRead::insert($records);
+
+        return response()->json(['status' => 'marked_read', 'count' => count($records)]);
+    }
+
+    public function update(Request $request, Chat $chat, PhotoService $photoService): JsonResponse
+    {
+        $this->authorize('create', Chat::class); 
+
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'avatar' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $chat->update($request->only(['name', 'description']));
+        
+        if ($request->hasFile('avatar')) {
+             if ($chat->avatar_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($chat->avatar_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($chat->avatar_path);
+            }
+            
+            $file = $request->file('avatar');
+            $path = $file->store("chats/{$chat->id}/avatar", 'public');
+            $chat->update(['avatar_path' => $path]);
+        }
+
+        return response()->json($chat);
     }
 
     public function sendMessage(Request $request, Chat $chat): JsonResponse
@@ -49,7 +106,7 @@ class ChatController extends Controller
 
         $data = $request->validate([
             'message' => ['nullable', 'string', 'max:5000'],
-            'file' => ['nullable', 'file', 'max:10240'], // 10MB
+            'file' => ['nullable', 'file', 'max:10240'],
         ]);
 
         if (empty($data['message']) && empty($data['file'])) {
