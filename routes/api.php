@@ -8,6 +8,7 @@ use App\Http\Controllers\OrderPhotoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkerTaskController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AnnouncementPhotoController;
 use App\Http\Controllers\ChatController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
