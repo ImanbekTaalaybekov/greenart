@@ -17,6 +17,10 @@ class Order extends Model
         'status',
     ];
 
+    protected $casts = [
+        'payment_money' => 'decimal:2',
+    ];
+
     public function client(): BelongsTo {
         return $this->belongsTo(User::class, 'client_id');
     }

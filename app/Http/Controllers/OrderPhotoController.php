@@ -11,6 +11,6 @@ class OrderPhotoController extends Controller
     {
         $orderPhoto->delete();
 
-        return response()->json([]);
+        return response()->json('удалено');
     }
 }
