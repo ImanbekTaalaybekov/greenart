@@ -136,26 +136,45 @@ class ChatController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->authorize('create', Chat::class); 
+        $this->authorize('create', Chat::class);
+        
         $data = $request->validate([
             'title' => ['required', 'string'],
             'participants' => ['required', 'array'],
             'participants.*' => ['exists:users,id'],
-            'type' => ['string', 'in:general,order']
+            'type' => ['string', 'in:general,order'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'avatar' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $chat = DB::transaction(function () use ($data, $request) {
             $chat = Chat::create([
                 'name' => $data['title'],
-                'type' => $data['type'] ?? 'order'
+                'type' => $data['type'] ?? 'order',
+                'description' => $data['description'] ?? null,
             ]);
 
             $participants = array_unique([...$data['participants'], $request->user()->id]);
             $chat->participants()->sync($participants);
+            
+            if ($request->hasFile('avatar')) {
+                $file = $request->file('avatar');
+                $path = $file->store("chats/{$chat->id}/avatar", 'public');
+                $chat->update(['avatar_path' => $path]);
+            }
 
             return $chat;
         });
 
         return response()->json($chat);
+    }
+
+    public function destroy(Chat $chat): JsonResponse
+    {
+        $this->authorize('delete', $chat);
+
+        $chat->delete();
+
+        return response()->json(['message' => 'Чат и все сообщения удалены']);
     }
 }

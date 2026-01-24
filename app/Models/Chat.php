@@ -26,6 +26,8 @@ class Chat extends Model
             if ($chat->avatar_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($chat->avatar_path)) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($chat->avatar_path);
             }
+
+            $chat->messages()->get()->each->delete();
         });
     }
 }
