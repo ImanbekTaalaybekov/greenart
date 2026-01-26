@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Chat extends Model
 {
-    protected $fillable = ['name', 'type'];
+    protected $fillable = ['name', 'type', 'description', 'avatar_path'];
 
     public function participants(): BelongsToMany
     {
@@ -18,5 +18,16 @@ class Chat extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(ChatMessage::class);
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function (Chat $chat) {
+            if ($chat->avatar_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($chat->avatar_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($chat->avatar_path);
+            }
+
+            $chat->messages()->get()->each->delete();
+        });
     }
 }
