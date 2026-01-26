@@ -8,6 +8,7 @@ use App\Http\Controllers\OrderPhotoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkerTaskController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AnnouncementPhotoController;
 use App\Http\Controllers\ChatController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
@@ -44,6 +45,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/chats', [ChatController::class, 'store']);
     Route::get('/chats/{chat}/messages', [ChatController::class, 'messages']);
     Route::post('/chats/{chat}/messages', [ChatController::class, 'sendMessage']);
+    Route::post('/chats/{chat}/read', [ChatController::class, 'markRead']);
+    Route::post('/chats/{chat}/update', [ChatController::class, 'update']);
+    Route::delete('/chats/{chat}', [ChatController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,client'])->group(function () {
