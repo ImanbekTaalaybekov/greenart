@@ -49,13 +49,13 @@ class UserController extends Controller
             'default_worker_id' => [
                 'nullable',
                 'exists:users,id',
-                Rule::prohibitedUnless('role', User::ROLE_CLIENT),
+                'prohibited_unless:role,' . User::ROLE_CLIENT,
             ],
             'salary' => [
                 'nullable',
                 'numeric',
                 'min:0',
-                Rule::prohibitedUnless('role', User::ROLE_WORKER),
+                'prohibited_unless:role,' . User::ROLE_WORKER,
             ],
             'password' => ['required', 'string', 'min:8'],
         ]);
