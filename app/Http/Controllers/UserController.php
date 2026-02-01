@@ -13,6 +13,21 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $role = $request->query('role');
+        
+        $query = User::query();
+
+        if ($role) {
+            $query->where('role', $role);
+        }
+
+        $users = $query->orderBy('name')->paginate(20);
+
+        return UserResource::collection($users)->response();
+    }
+
     public function clients(Request $request): JsonResponse
     {
         $clients = User::query()
