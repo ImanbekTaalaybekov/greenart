@@ -23,6 +23,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::post('/clients/{client}/default-worker', [ClientWorkerController::class, 'setDefaultWorker']);
     Route::get('/clients', [UserController::class, 'clients']);
     Route::get('/workers', [UserController::class, 'workers']);
+    Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::patch('/users/{user}', [UserController::class, 'update']);
 });
