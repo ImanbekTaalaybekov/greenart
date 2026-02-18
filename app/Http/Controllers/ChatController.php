@@ -10,6 +10,7 @@ use App\Services\PhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Events\MessageSent;
 
 
 class ChatController extends Controller
@@ -130,6 +131,8 @@ class ChatController extends Controller
         $message = ChatMessage::create($messageData);
         
         $chat->touch();
+
+        MessageSent::dispatch($message);
 
         return response()->json(new ChatMessageResource($message));
     }
