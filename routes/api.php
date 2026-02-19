@@ -7,8 +7,10 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderPhotoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkerTaskController;
+use App\Http\Controllers\WorkVisitController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\AnnouncementPhotoController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -25,12 +27,17 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::patch('/users/{user}', [UserController::class, 'update']);
+    Route::get('/workers/{worker}/salary', [UserController::class, 'workerSalary']);
+    Route::get('/visits', [WorkVisitController::class, 'indexAdmin']);
 });
 
 Route::middleware(['auth:sanctum', 'role:worker'])->prefix('worker')->group(function () {
     Route::get('/tasks', [WorkerTaskController::class, 'tasks']);
     Route::post('/tasks/{order}/report', [WorkerTaskController::class, 'storeReport']);
     Route::get('/reports', [WorkerTaskController::class, 'reports']);
+    Route::get('/visits', [WorkVisitController::class, 'index']);
+    Route::post('/visits', [WorkVisitController::class, 'store']);
+    Route::delete('/visits/{visit}', [WorkVisitController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -50,3 +57,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin,client'])->group(function () {
     Route::get('/workers/{worker}/schedule', [UserController::class, 'workerSchedule']);
 });
+

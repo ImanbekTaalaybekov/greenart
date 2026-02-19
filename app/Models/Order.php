@@ -21,23 +21,33 @@ class Order extends Model
         'payment_money' => 'decimal:2',
     ];
 
-    public function client(): BelongsTo {
+    public function client(): BelongsTo
+    {
         return $this->belongsTo(User::class, 'client_id');
     }
 
-    public function worker(): BelongsTo {
+    public function worker(): BelongsTo
+    {
         return $this->belongsTo(User::class, 'worker_id');
     }
 
-    public function photos(): HasMany {
+    public function photos(): HasMany
+    {
         return $this->hasMany(OrderPhoto::class);
     }
 
-    public function reports(): HasMany {
+    public function reports(): HasMany
+    {
         return $this->hasMany(OrderReport::class);
     }
 
-    public function isIncluded(): bool {
+    public function workVisits(): HasMany
+    {
+        return $this->hasMany(WorkVisit::class);
+    }
+
+    public function isIncluded(): bool
+    {
         return $this->payment_type === 'included';
     }
 
@@ -45,7 +55,7 @@ class Order extends Model
     {
         static::deleting(function (Order $order) {
             $order->photos()->get()->each->delete();
-            
+
             $order->reports()->get()->each->delete();
         });
     }
