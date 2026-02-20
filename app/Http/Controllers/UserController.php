@@ -16,7 +16,7 @@ class UserController extends Controller
     public function index(Request $request): JsonResponse
     {
         $role = $request->query('role');
-        
+
         $query = User::query();
 
         if ($role) {
@@ -55,12 +55,16 @@ class UserController extends Controller
             'login' => ['required', 'string', 'max:255', 'unique:users,login'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:255', 'unique:users,phone'],
-            'role' => ['required', 'string', Rule::in([
-                User::ROLE_CLIENT,
-                User::ROLE_WORKER,
-                User::ROLE_ADMIN,
-                User::ROLE_ACCOUNTANT,
-            ])],
+            'role' => [
+                'required',
+                'string',
+                Rule::in([
+                    User::ROLE_CLIENT,
+                    User::ROLE_WORKER,
+                    User::ROLE_ADMIN,
+                    User::ROLE_ACCOUNTANT,
+                ])
+            ],
             'default_worker_id' => [
                 'nullable',
                 'exists:users,id',
@@ -98,12 +102,16 @@ class UserController extends Controller
             'login' => ['sometimes', 'string', 'max:255', Rule::unique('users', 'login')->ignore($user->id)],
             'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('users', 'phone')->ignore($user->id)],
-            'role' => ['sometimes', 'string', Rule::in([
-                User::ROLE_CLIENT,
-                User::ROLE_WORKER,
-                User::ROLE_ADMIN,
-                User::ROLE_ACCOUNTANT,
-            ])],
+            'role' => [
+                'sometimes',
+                'string',
+                Rule::in([
+                    User::ROLE_CLIENT,
+                    User::ROLE_WORKER,
+                    User::ROLE_ADMIN,
+                    User::ROLE_ACCOUNTANT,
+                ])
+            ],
             'default_worker_id' => [
                 'sometimes',
                 'nullable',
@@ -175,9 +183,11 @@ class UserController extends Controller
         $to = $data['to'] ?? now()->toDateString();
 
         $query = OrderReport::query()
-            ->with(['order' => function ($query) {
-                $query->select('id', 'client_id', 'worker_id', 'description', 'payment_type', 'status');
-            }])
+            ->with([
+                'order' => function ($query) {
+                    $query->select('id', 'client_id', 'worker_id', 'description', 'payment_type', 'status');
+                }
+            ])
             ->where('worker_id', $worker->id)
             ->whereBetween('report_date', [$from, $to])
             ->orderBy('report_date');
@@ -193,5 +203,48 @@ class UserController extends Controller
         }
 
         return response()->json($query->get());
+    }
+
+    public function workerSalary(Request $request, User $worker): JsonResponse
+    {
+        if (!$worker->hasRole(User::ROLE_WORKER)) {
+            abort(404, 'Садовник не найден.');
+        }
+
+        $data = $request->validate([
+            'from' => ['required', 'date'],
+            'to' => ['required', 'date', 'after_or_equal:from'],
+        ]);
+
+        $from = $data['from'];
+        $to = $data['to'];
+
+        $visits = \App\Models\WorkVisit::where('worker_id', $worker->id)
+            ->whereBetween('visit_date', [$from, $to])
+            ->get();
+
+        $uniqueDays = $visits->pluck('visit_date')->map(fn($d) => $d->toDateString())->unique()->count();
+
+        $fixedSalary = $uniqueDays * ($worker->salary ?? 0);
+
+        $visitOrderIds = $visits->pluck('order_id')->unique();
+
+        $extrasTotal = Order::whereIn('id', $visitOrderIds)
+            ->where('payment_type', 'extra')
+            ->sum('payment_money');
+
+        $totalSalary = $fixedSalary + $extrasTotal;
+
+        return response()->json([
+            'worker_id' => $worker->id,
+            'worker_name' => $worker->name,
+            'period' => ['from' => $from, 'to' => $to],
+            'days_worked' => $uniqueDays,
+            'daily_rate' => $worker->salary,
+            'fixed_salary' => number_format($fixedSalary, 2, '.', ''),
+            'extras_total' => number_format($extrasTotal, 2, '.', ''),
+            'total_salary' => number_format($totalSalary, 2, '.', ''),
+            'visits_count' => $visits->count(),
+        ]);
     }
 }

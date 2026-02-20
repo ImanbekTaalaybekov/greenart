@@ -8,6 +8,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderReport extends Model
 {
+    protected $fillable = [
+        'order_id',
+        'worker_id',
+        'work_visit_id',
+        'report_date',
+        'work_type',
+        'comment',
+        'completed_at',
+    ];
+
+    protected $casts = [
+        'report_date' => 'date',
+        'completed_at' => 'datetime',
+    ];
 
     public function order(): BelongsTo
     {
@@ -22,6 +36,11 @@ class OrderReport extends Model
     public function photos(): HasMany
     {
         return $this->hasMany(OrderReportPhoto::class);
+    }
+
+    public function workVisit(): BelongsTo
+    {
+        return $this->belongsTo(WorkVisit::class);
     }
 
     protected static function booted()

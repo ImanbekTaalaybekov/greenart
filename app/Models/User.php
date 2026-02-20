@@ -2,6 +2,7 @@
 
 namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -52,5 +53,10 @@ class User extends Authenticatable
     public function defaultWorker(): BelongsTo
     {
         return $this->belongsTo(self::class, 'default_worker_id');
+    }
+
+    public function workVisits(): HasMany
+    {
+        return $this->hasMany(WorkVisit::class, 'worker_id');
     }
 }
