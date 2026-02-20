@@ -11,7 +11,9 @@ use App\Http\Controllers\WorkVisitController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AnnouncementPhotoController;
 use App\Http\Controllers\ChatController;
-use App\Http\Controllers\AnnouncementPhotoController;
+use Illuminate\Support\Facades\Broadcast;
+
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
