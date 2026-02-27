@@ -59,4 +59,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(WorkVisit::class, 'worker_id');
     }
+
+    public function salaryAdjustments(): HasMany
+    {
+        return $this->hasMany(SalaryAdjustment::class, 'worker_id');
+    }
 }

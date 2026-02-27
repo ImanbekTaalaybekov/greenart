@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\Order;
 use App\Models\OrderReport;
+use App\Models\SalaryAdjustment;
 use App\Models\User;
+use App\Models\WorkVisit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -219,7 +221,7 @@ class UserController extends Controller
         $from = $data['from'];
         $to = $data['to'];
 
-        $visits = \App\Models\WorkVisit::where('worker_id', $worker->id)
+        $visits = WorkVisit::where('worker_id', $worker->id)
             ->whereBetween('visit_date', [$from, $to])
             ->get();
 
@@ -233,7 +235,14 @@ class UserController extends Controller
             ->where('payment_type', 'extra')
             ->sum('payment_money');
 
-        $totalSalary = $fixedSalary + $extrasTotal;
+        $adjustments = SalaryAdjustment::where('worker_id', $worker->id)
+            ->whereBetween('date', [$from, $to])
+            ->get();
+
+        $bonusesTotal = $adjustments->where('type', 'bonus')->sum('amount');
+        $penaltiesTotal = $adjustments->where('type', 'penalty')->sum('amount');
+
+        $totalSalary = $fixedSalary + $extrasTotal + $bonusesTotal - $penaltiesTotal;
 
         return response()->json([
             'worker_id' => $worker->id,
@@ -243,8 +252,66 @@ class UserController extends Controller
             'daily_rate' => $worker->salary,
             'fixed_salary' => number_format($fixedSalary, 2, '.', ''),
             'extras_total' => number_format($extrasTotal, 2, '.', ''),
+            'bonuses_total' => number_format($bonusesTotal, 2, '.', ''),
+            'penalties_total' => number_format($penaltiesTotal, 2, '.', ''),
             'total_salary' => number_format($totalSalary, 2, '.', ''),
             'visits_count' => $visits->count(),
+        ]);
+    }
+
+    public function allSalaries(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'from' => ['required', 'date'],
+            'to' => ['required', 'date', 'after_or_equal:from'],
+        ]);
+
+        $from = $data['from'];
+        $to = $data['to'];
+
+        $workers = User::where('role', User::ROLE_WORKER)->orderBy('name')->get();
+
+        $result = [];
+
+        foreach ($workers as $worker) {
+            $visits = WorkVisit::where('worker_id', $worker->id)
+                ->whereBetween('visit_date', [$from, $to])
+                ->get();
+
+            $uniqueDays = $visits->pluck('visit_date')->map(fn($d) => $d->toDateString())->unique()->count();
+            $fixedSalary = $uniqueDays * ($worker->salary ?? 0);
+
+            $visitOrderIds = $visits->pluck('order_id')->unique();
+            $extrasTotal = Order::whereIn('id', $visitOrderIds)
+                ->where('payment_type', 'extra')
+                ->sum('payment_money');
+
+            $adjustments = SalaryAdjustment::where('worker_id', $worker->id)
+                ->whereBetween('date', [$from, $to])
+                ->get();
+
+            $bonusesTotal = $adjustments->where('type', 'bonus')->sum('amount');
+            $penaltiesTotal = $adjustments->where('type', 'penalty')->sum('amount');
+
+            $totalSalary = $fixedSalary + $extrasTotal + $bonusesTotal - $penaltiesTotal;
+
+            $result[] = [
+                'worker_id' => $worker->id,
+                'worker_name' => $worker->name,
+                'days_worked' => $uniqueDays,
+                'daily_rate' => $worker->salary,
+                'fixed_salary' => number_format($fixedSalary, 2, '.', ''),
+                'extras_total' => number_format($extrasTotal, 2, '.', ''),
+                'bonuses_total' => number_format($bonusesTotal, 2, '.', ''),
+                'penalties_total' => number_format($penaltiesTotal, 2, '.', ''),
+                'total_salary' => number_format($totalSalary, 2, '.', ''),
+                'visits_count' => $visits->count(),
+            ];
+        }
+
+        return response()->json([
+            'period' => ['from' => $from, 'to' => $to],
+            'workers' => $result,
         ]);
     }
 }

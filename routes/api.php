@@ -5,13 +5,13 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientWorkerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderPhotoController;
+use App\Http\Controllers\SalaryAdjustmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkerTaskController;
 use App\Http\Controllers\WorkVisitController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AnnouncementPhotoController;
 use App\Http\Controllers\ChatController;
-use App\Http\Controllers\AnnouncementPhotoController;
 
 Route::post('/auth', [AuthController::class, 'auth']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -30,6 +30,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::patch('/users/{user}', [UserController::class, 'update']);
     Route::get('/workers/{worker}/salary', [UserController::class, 'workerSalary']);
     Route::get('/visits', [WorkVisitController::class, 'indexAdmin']);
+    Route::patch('/visits/{visit}', [WorkVisitController::class, 'update']);
+    Route::post('/visits/{visit}/approve', [WorkVisitController::class, 'approve']);
+    Route::get('/salaries', [UserController::class, 'allSalaries']);
+    Route::get('/salary-adjustments', [SalaryAdjustmentController::class, 'index']);
+    Route::post('/salary-adjustments', [SalaryAdjustmentController::class, 'store']);
+    Route::delete('/salary-adjustments/{adjustment}', [SalaryAdjustmentController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'role:worker'])->prefix('worker')->group(function () {

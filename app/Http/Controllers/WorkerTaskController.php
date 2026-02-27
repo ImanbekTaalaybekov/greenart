@@ -26,7 +26,7 @@ class WorkerTaskController extends Controller
             ->with([
                 'client',
                 'photos',
-                'reports' => fn ($q) => $q->where('worker_id', $workerId)->with('photos'),
+                'reports' => fn($q) => $q->where('worker_id', $workerId)->with('photos'),
             ])
             ->where('worker_id', $workerId)
             ->orderByDesc('created_at');
@@ -46,7 +46,7 @@ class WorkerTaskController extends Controller
 
     public function reports(Request $request): JsonResponse
     {
-         $data = $request->validate([
+        $data = $request->validate([
             'date' => ['required', 'date'],
             'type' => ['nullable', Rule::in(['included', 'extra'])],
         ]);
@@ -94,7 +94,7 @@ class WorkerTaskController extends Controller
             }
 
             if ($isCompleted) {
-                $order->update(['status' => 'done']);
+                $order->update(['status' => 'done', 'completed_at' => now()]);
             } elseif (in_array($order->status, ['pending', 'assigned'], true)) {
                 $order->update(['status' => 'in_progress']);
             }
