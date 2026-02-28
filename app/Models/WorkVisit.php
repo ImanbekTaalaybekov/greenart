@@ -13,10 +13,15 @@ class WorkVisit extends Model
         'order_id',
         'visit_date',
         'comment',
+        'completed_at',
+        'approved_at',
+        'approved_by',
     ];
 
     protected $casts = [
         'visit_date' => 'date',
+        'completed_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function worker(): BelongsTo
@@ -27,6 +32,11 @@ class WorkVisit extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     public function reports(): HasMany

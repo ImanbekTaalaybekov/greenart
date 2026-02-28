@@ -15,10 +15,12 @@ class Order extends Model
         'payment_type',
         'payment_money',
         'status',
+        'completed_at',
     ];
 
     protected $casts = [
         'payment_money' => 'decimal:2',
+        'completed_at' => 'datetime',
     ];
 
     public function client(): BelongsTo
