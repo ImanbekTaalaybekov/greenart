@@ -73,6 +73,39 @@ class ChatController extends Controller
         return response()->json(['status' => 'marked_read', 'count' => count($records)]);
     }
 
+    public function show(Request $request, Chat $chat): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$chat->participants()->where('user_id', $user->id)->exists()) {
+            abort(403, 'Вы не являетесь участником этого чата.');
+        }
+
+        $chatData = [
+            'id'          => $chat->id,
+            'name'        => $chat->name,
+            'type'        => $chat->type,
+            'description' => $chat->description,
+            'avatar'      => $chat->avatar_path ? asset('storage/' . $chat->avatar_path) : null,
+            'created_at'  => $chat->created_at,
+            'updated_at'  => $chat->updated_at,
+        ];
+
+        if ($user->hasRole(\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_WORKER)) {
+            $chat->load('participants');
+            
+            $chatData['participants'] = $chat->participants->map(function ($participant) {
+                return [
+                    'id'   => $participant->id,
+                    'name' => $participant->name,
+                    'role' => $participant->role,
+                ];
+            });
+        }
+
+        return response()->json($chatData);
+    }
+
     public function update(Request $request, Chat $chat, PhotoService $photoService): JsonResponse
     {
         $this->authorize('create', Chat::class); 
